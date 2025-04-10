@@ -4,16 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Vue Task App</title>
-    <style>
-         /* Basic styling for completed tasks */
-         .completed {
-            text-decoration: line-through;
-            color: grey;
-        }
-        li {
-            cursor: pointer; /* Indicate tasks are clickable */
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
@@ -26,10 +17,19 @@
         </form>
 
         <ul>
-            <li v-for="task in tasks" :key="task.id" @click="toggleComplete(task)" :class="{ completed: task.completed }">
+            <li v-for="task in tasks" :key="task.id":class="{ completed: task.completed }">
                 {{ task.name }}
+                <button @click="deleteTask(task.id)">Delete</button>
+                <button @click="updateTask(task)">Update</button>
+                <button @click="toggleComplete(task)">Toggle complete</button>
             </li>
         </ul>
+
+        <div v-if="showUpdateForm" class="task-form">
+            <input type="text" v-model="updatedTaskName" placeholder="Task Name">
+            <button @click="saveUpdatedTask">Save Update</button>
+            <button @click="showUpdateForm = false">Cancel</button>
+        </div>
 
     </div>
 
@@ -52,7 +52,10 @@ createApp({
             ],
             // This will be linked to the input field using v-model
             newTaskName: '',
-            idCounter: 5 //set id for next task to next available one
+            idCounter: 5, //set id for next task to next available one
+            showUpdateForm: false,
+            currentIndex: -1,
+            updatedTaskName: ''
         };
     },
     // methods: Contains the functions our app can call
@@ -79,9 +82,28 @@ createApp({
 
         toggleComplete(task) {
             //change task completed status 
-        }
+            task.completed = !task.completed
+        },
 
         //add delete and update task functions
+        deleteTask(taskId) {
+            this.tasks = this.tasks.filter(task => task.id !== taskId)
+        },
+
+        updateTask(task) {
+            this.updatedTaskName = task.name;
+            this.currentIndex = this.tasks.findIndex(taskIteration => taskIteration.id === task.id)
+            this.showUpdateForm = true;
+        },
+
+        saveUpdatedTask() {
+            if(this.updatedTaskName.trim() === '')
+                return; //exit the function
+
+            this.tasks[this.currentIndex].name = this.updatedTaskName;
+            this.showUpdateForm = false;
+            this.updatedTaskName = '';
+        }
         
     }
 }).mount('#app'); // Tell Vue to take control of the HTML element with the id="app"
