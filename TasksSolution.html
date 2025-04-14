@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Vue Task App (API)</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Optional: Add a simple loading indicator style */
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+         /* Optional: Add a simple error message style */
+        .error {
+            color: red;
+            text-align: center;
+            padding: 10px;
+            border: 1px solid red;
+            background-color: #ffebeb;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app">
+        <h1>My Tasks</h1>
+
+        <div v-if="errorMessage" class="error">{{ errorMessage }}</div>
+
+        <form @submit.prevent="addTask">
+            <input type="text" v-model="newTaskName" placeholder="Add a new task (Press Enter to add)">
+            <button type="submit">Add Task</button>
+        </form>
+
+        <div class="controls">
+            <input type="text" v-model="searchTerm" placeholder="Search tasks...">
+            <button @click="toggleFilter">
+                {{ showOnlyUncompleted ? 'Show All Tasks' : 'Show Uncompleted Tasks' }}
+            </button>
+        </div>
+
+        <div v-if="isLoading" class="loading">Loading tasks...</div>
+
+        <ul v-if="!isLoading && filteredTasks.length > 0">
+             <li v-for="task in filteredTasks" :key="task.id" :class="{ completed: task.completed }">
+                <span class="task-name">{{ task.name }}</span>
+                <div class="task-buttons">
+                    <button class="btn-toggle" @click="toggleComplete(task)">
+                        {{ task.completed ? 'Mark Uncompleted' : 'Mark Completed' }}
+                    </button>
+                    <button class="btn-update" @click="updateTask(task)">Update</button>
+                    <button class="btn-delete" @click="deleteTask(task.id)">Delete</button>
+                </div>
+            </li>
+        </ul>
+
+        <p v-if="!isLoading && filteredTasks.length === 0" class="no-tasks">No tasks available.</p>
+
+
+        <div v-if="showUpdateForm" class="task-form update-form">
+            <h3>Update Task</h3>
+            <input
+                type="text"
+                v-model="updatedTaskName"
+                placeholder="Task Name"
+                @keydown.enter.prevent="saveUpdatedTask"
+                ref="updateInput" >
+            <button class="btn-save-update" @click="saveUpdatedTask">Save Update</button>
+            <button class="btn-cancel" @click="cancelUpdate">Cancel</button>
+        </div>
+
+    </div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+    <script>
+        const { createApp, nextTick } = Vue; // Get createApp and nextTick
+
+        // Define API Base URL and placeholder User ID
+        const API_BASE_URL = 'http://localhost:3000';
+        const USER_ID = 1; // Placeholder User ID for API calls
+
+        createApp({
+            data() {
+                return {
+                    // Tasks will be loaded from API, start empty
+                    tasks: [],
+                    newTaskName: '',
+                    // idCounter is no longer needed, DB handles IDs
+                    showUpdateForm: false,
+                    currentTaskId: null, // Still store the ID of the task being updated
+                    updatedTaskName: '',
+                    showOnlyUncompleted: false, // Filter state
+                    searchTerm: '', // Search term
+                    isLoading: false, // Flag for loading state
+                    errorMessage: '' // To display API errors
+                };
+            },
+            computed: {
+                // Computed property for filtering/searching remains the same,
+                // it operates on the local 'tasks' array after it's fetched/updated.
+                filteredTasks() {
+                    let filtered = this.tasks;
+                    if (this.showOnlyUncompleted) {
+                        filtered = filtered.filter(task => !task.completed);
+                    }
+                    if (this.searchTerm.trim() !== '') {
+                        const lowerCaseSearchTerm = this.searchTerm.toLowerCase();
+                        filtered = filtered.filter(task =>
+                            task.name.toLowerCase().includes(lowerCaseSearchTerm)
+                        );
+                    }
+                    return filtered;
+                }
+            },
+            methods: {
+                // --- API Interaction Methods ---
+                async fetchTasks() {
+                    this.isLoading = true;
+                    this.errorMessage = ''; // Clear previous errors
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/tasks`);
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        const data = await response.json();
+                        this.tasks = data; // Update local tasks array
+                    } catch (error) {
+                        console.error('Error fetching tasks:', error);
+                        this.errorMessage = 'Failed to load tasks. Please ensure the server is running.';
+                    } finally {
+                        this.isLoading = false;
+                    }
+                },
+
+                async addTask() {
+                    if (this.newTaskName.trim() === '') return;
+                    this.errorMessage = ''; // Clear previous errors
+
+                    const newTaskData = {
+                        name: this.newTaskName.trim(),
+                        completed: false,
+                        user_id: USER_ID // Include hardcoded user_id
+                    };
+
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/tasks`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(newTaskData)
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        const createdTask = await response.json();
+                        // Add the task returned by the server (with DB ID) to local state
+                        this.tasks.push(createdTask);
+                        this.newTaskName = ''; // Clear input field
+                    } catch (error) {
+                        console.error('Error adding task:', error);
+                         this.errorMessage = 'Failed to add task.';
+                    }
+                },
+
+                async deleteTask(taskId) {
+                    // Close update form if it happens to be open for this task
+                    if (this.showUpdateForm && this.currentTaskId === taskId) {
+                       this.cancelUpdate();
+                    }
+                     this.errorMessage = ''; // Clear previous errors
+
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
+                            method: 'DELETE'
+                        });
+
+                        if (!response.ok && response.status !== 204) { // 204 No Content is success for DELETE
+                             throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+
+                         // Remove task from local state *after* successful deletion on server
+                        this.tasks = this.tasks.filter(task => task.id !== taskId);
+
+                    } catch (error) {
+                        console.error('Error deleting task:', error);
+                        this.errorMessage = 'Failed to delete task.';
+                    }
+                },
+
+                async toggleComplete(task) {
+                     //     HOMEWORK!!!
+                },
+
+                async saveUpdatedTask() {
+                    if (this.updatedTaskName.trim() === '' || this.currentTaskId === null) {
+                        this.cancelUpdate();
+                        return;
+                    }
+                     this.errorMessage = ''; // Clear previous errors
+
+                    // Find the original task to get its current 'completed' and 'user_id' status
+                    const originalTask = this.tasks.find(task => task.id === this.currentTaskId);
+                    if (!originalTask) {
+                         this.errorMessage = 'Error: Cannot find task to update.';
+                         this.cancelUpdate();
+                         return;
+                    }
+
+                    const updatedData = {
+                        name: this.updatedTaskName.trim(),
+                        completed: originalTask.completed, // Keep original completed status
+                        user_id: originalTask.user_id || USER_ID // Keep original user_id or fallback
+                    };
+
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/tasks/${this.currentTaskId}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(updatedData)
+                        });
+
+                        if (!response.ok) {
+                             throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                         const returnedTask = await response.json();
+
+                        // Update local task name *after* successful API call
+                        const taskIndex = this.tasks.findIndex(task => task.id === this.currentTaskId);
+                        if (taskIndex !== -1) {
+                           this.tasks[taskIndex].name = returnedTask.name; // Update from server response
+                        }
+                        this.cancelUpdate(); // Close form and reset state
+
+                    } catch (error) {
+                        console.error('Error updating task:', error);
+                         this.errorMessage = 'Failed to update task name.';
+                        // Optional: Don't close form on error?
+                    }
+                },
+
+                // --- UI Methods ---
+                updateTask(task) {
+                    // Same logic as before: prepare the update form
+                    this.updatedTaskName = task.name;
+                    this.currentTaskId = task.id;
+                    this.showUpdateForm = true;
+                    this.errorMessage = ''; // Clear errors when opening form
+
+                    nextTick(() => {
+                         if(this.$refs.updateInput) {
+                            this.$refs.updateInput.focus();
+                         }
+                    });
+                },
+
+                cancelUpdate() {
+                    // Same logic as before: hide form, reset state
+                    this.showUpdateForm = false;
+                    this.updatedTaskName = '';
+                    this.currentTaskId = null;
+                },
+
+                toggleFilter() {
+                    // Same logic as before: toggle local filter flag
+                    this.showOnlyUncompleted = !this.showOnlyUncompleted;
+                },
+
+                handleEscKey(event) {
+                     // Same logic as before: close update form on Esc
+                    if (event.key === 'Escape' && this.showUpdateForm) {
+                        this.cancelUpdate();
+                    }
+                }
+            },
+            mounted() {
+                // Fetch initial tasks when the component is mounted
+                this.fetchTasks();
+                // Add keyboard listener for Esc key
+                window.addEventListener('keydown', this.handleEscKey);
+            },
+            beforeUnmount() {
+                // Remove keyboard listener to prevent memory leaks
+                window.removeEventListener('keydown', this.handleEscKey);
+            }
+        }).mount('#app');
+    </script>
+
+</body>
+</html>
