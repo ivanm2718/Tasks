@@ -1,210 +1,212 @@
-/* General Body Styling */
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Nicer font */
-    background-color: #f4f7f6; /* Light grey background */
+/* Reset and Base */
+* {
+    box-sizing: border-box;
     margin: 0;
-    padding: 20px;
-    color: #333; /* Default text color */
-    line-height: 1.6;
+    padding: 0;
 }
 
-/* Main App Container */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f0f2f5;
+    color: #333;
+    padding: 2rem;
+}
+
+h1, h2, h3 {
+    color: #222;
+    margin-bottom: 1rem;
+}
+
+/* Layout Container */
 #app {
-    max-width: 600px; /* Limit width for better readability */
-    margin: 40px auto; /* Center the container */
-    background-color: #ffffff; /* White background for the app */
-    padding: 30px;
-    border-radius: 8px; /* Rounded corners */
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    max-width: 600px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
 }
 
-/* Heading Styling */
-h1 {
+/* Auth Forms */
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.auth-form h2 {
     text-align: center;
-    color: #2c3e50; /* Dark blue-grey color */
-    margin-top: 0;
-    margin-bottom: 30px;
 }
 
-/* Form Styling */
-form {
-    display: flex; /* Align input and button horizontally */
-    margin-bottom: 15px; /* Reduced margin */
-    gap: 10px; /* Add space between input and button */
+.form-group {
+    display: flex;
+    flex-direction: column;
 }
 
-input[type="text"] {
-    flex-grow: 1; /* Allow input to take up available space */
-    padding: 12px 15px;
+label {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+input[type="text"],
+input[type="password"] {
+    padding: 0.6rem;
     border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 1rem;
-    transition: border-color 0.2s ease-in-out;
+    border-radius: 6px;
+    transition: border 0.2s;
 }
 
-input[type="text"]:focus {
+input:focus {
+    border-color: #007bff;
     outline: none;
-    border-color: #42b983; /* Highlight with Vue green on focus */
 }
 
-button { /* General button styling for consistency */
-    padding: 10px 15px;
+button {
+    padding: 0.7rem 1.2rem;
     border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.95rem;
-    transition: background-color 0.2s ease-in-out, opacity 0.2s ease-in-out;
-    white-space: nowrap; /* Prevent text wrapping */
-}
-
-button:hover {
-    opacity: 0.9;
-}
-
-button[type="submit"],
-.btn-save-update { /* Add Task and Save Update button styling */
-    background-color: #42b983; /* Vue green */
+    border-radius: 6px;
+    background-color: #007bff;
     color: white;
     font-weight: bold;
-}
-button[type="submit"]:hover,
-.btn-save-update:hover {
-    background-color: #36a374; /* Darker green on hover */
+    cursor: pointer;
+    transition: background 0.2s;
 }
 
-/* Controls Bar (Search & Filter) */
-.controls {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 25px;
+button:hover:not(:disabled) {
+    background-color: #0056b3;
 }
 
-.controls input[type="text"] {
-    flex-grow: 1; /* Take available space */
+button:disabled {
+    background-color: #aaa;
+    cursor: not-allowed;
 }
 
-.controls button {
-    background-color: #5a6268; /* Dark grey */
-    color: white;
-}
-.controls button:hover {
-    background-color: #4a4f54;
+.switch-auth {
+    text-align: center;
+    margin-top: 1rem;
 }
 
+.switch-auth button {
+    background: none;
+    border: none;
+    color: #007bff;
+    cursor: pointer;
+    font-weight: bold;
+}
 
-/* Task List Styling */
+/* Messages */
+.error {
+    background-color: #fdd;
+    color: #a00;
+    padding: 0.5rem;
+    border-radius: 6px;
+    font-weight: bold;
+}
+
+.success {
+    background-color: #d4edda;
+    color: #155724;
+    padding: 0.5rem;
+    border-radius: 6px;
+    font-weight: bold;
+}
+
+/* Task List */
 ul {
-    list-style: none; /* Remove default bullet points */
-    padding: 0;
-    margin: 0 0 20px 0; /* Add margin bottom */
+    list-style-type: none;
+    margin-top: 1rem;
 }
 
 li {
-    padding: 12px 15px;
-    border-bottom: 1px solid #eee; /* Separator line */
-    transition: background-color 0.2s ease;
-    display: flex; /* Use flexbox for alignment */
-    justify-content: space-between; /* Space out name and buttons */
-    align-items: center; /* Vertically center items */
-    gap: 10px; /* Space between name and button group */
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
-li:last-child {
-    border-bottom: none; /* Remove border from the last item */
-}
-
-li:hover {
-    background-color: #f9f9f9; /* Slight grey background on hover */
-}
-
-.task-name {
-    flex-grow: 1; /* Allow name to take available space */
-    word-break: break-word; /* Prevent long tasks from overflowing */
-    cursor: default; /* Indicate text is not directly interactive */
+li.completed .task-name {
+    text-decoration: line-through;
+    color: #777;
 }
 
 .task-buttons {
     display: flex;
-    gap: 5px; /* Space between buttons within a task */
-    flex-shrink: 0; /* Prevent buttons from shrinking */
+    flex-wrap: wrap;
+    gap: 0.5rem;
 }
 
-/* Individual Task Button Styles */
-li button {
-    padding: 6px 10px; /* Smaller padding for task buttons */
-    font-size: 0.85rem;
-}
-
-.btn-delete {
-    background-color: #dc3545; /* Red */
-    color: white;
-}
-.btn-delete:hover {
-    background-color: #c82333;
-}
-
-.btn-update {
-    background-color: #007bff; /* Blue */
-    color: white;
-}
-.btn-update:hover {
-    background-color: #0056b3;
+.task-buttons button {
+    flex: 1;
+    background-color: #6c757d;
 }
 
 .btn-toggle {
-    background-color: #6c757d; /* Grey */
-    color: white;
-}
-.btn-toggle:hover {
-    background-color: #5a6268;
+    background-color: #17a2b8;
 }
 
-
-/* Styling for Completed Tasks */
-.completed .task-name { /* Target only the name span */
-    text-decoration: line-through;
-    color: #aaa; /* Lighter grey for completed tasks */
-    /* Optional: Add a subtle fade */
-    /* opacity: 0.7; */
+.btn-update {
+    background-color: #ffc107;
 }
 
-/* Update Task Form Specific Styling */
-.task-form {
-    margin-top: 20px;
-    padding: 20px;
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 5px;
+.btn-delete {
+    background-color: #dc3545;
 }
 
-.update-form h3 {
-    margin-top: 0;
-    margin-bottom: 15px;
-    color: #333;
-    text-align: center;
-}
-
-.update-form input[type="text"] {
-    margin-bottom: 10px;
-    width: calc(100% - 30px); /* Adjust width considering padding */
-}
-
-.update-form button {
-    margin-right: 5px;
+.btn-save-update {
+    background-color: #28a745;
 }
 
 .btn-cancel {
-    background-color: #6c757d; /* Grey */
-    color: white;
-}
-.btn-cancel:hover {
-    background-color: #5a6268;
+    background-color: #6c757d;
 }
 
-/* No tasks message styling */
+/* Update Form */
+.update-form {
+    margin-top: 2rem;
+    background-color: #eef;
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+/* Controls */
+.controls {
+    margin-top: 1.5rem;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.controls input {
+    flex: 2;
+}
+
+.controls button {
+    flex: 1;
+}
+
+/* User Info */
+.user-info {
+    background-color: #e9ecef;
+    padding: 0.5rem 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.loading {
+    text-align: center;
+    font-style: italic;
+    margin: 1rem 0;
+}
+
 .no-tasks {
     text-align: center;
-    color: #6c757d;
-    margin-top: 20px;
-    font-style: italic;
+    color: #777;
+    margin-top: 1rem;
 }
